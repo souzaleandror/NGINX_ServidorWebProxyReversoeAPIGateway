@@ -440,3 +440,169 @@ Conhecemos o formato de configuração do nginx
 Configuramos nosso primeiro servidor web
 Aprendemos a lidar com a CLI do nginx
 Vimos como configurar páginas de erro
+
+@03-Proxy reverso
+
+@@01
+O que é?
+
+[00:00] Boas-vindas de volta a mais um capítulo desse treinamento, onde estamos brincando com o NGINX: um servidor web muito poderoso e que traz várias funcionalidades além de simplesmente ser um servidor web!
+[00:12] Então vamos começar agora a falar sobre algumas dessas outras funcionalidades. A mais comum - e eu me arrisco a dizer uma das mais utilizadas - é o conceito de “proxy reverso”.
+
+[00:23] A primeira vez que eu ouvi esse termo eu fiquei simplesmente acenando e sorrindo, sem entender absolutamente nada do que aquilo queria dizer, mas o conceito de proxy reverso não é complicado.
+
+[00:35] Então eu vou tentar trazer para você a ideia por trás de um proxy reverso, antes de implementarmos ele, para que as coisas fiquem claras antes de sairmos digitando configuração.
+
+[00:45] Então, um proxy de rede funciona, basicamente, como se fosse um túnel, um filtro, um intermediário; vamos chamar assim. Então imagine que você está em uma rede corporativa da sua empresa e algumas coisas são bloqueadas nessa rede, você não consegue acessar sites de notícias, site de conteúdo adulto, rede social etc.
+
+[01:06] Isso pode ser feito através de um proxy na rede. Um proxy, basicamente, é um servidor em que todas as requisições daquela rede, antes de irem para internet, passam por esse proxy.
+
+[01:18] Então, você no seu computador do trabalho faz uma requisição para “google.com”. Ao invés de ir diretamente para o servidor do Google, isso passa pelo servidor de proxy (pelas configurações da rede) e desse servidor de proxy, vai para o Google - ou dependendo das regras, ele trava essa requisição ali.
+
+[01:35] Então isso é um proxy de rede, super simplificando. Um proxy reverso é quando, ao invés dessa tarefa estar no lado do cliente, nós temos algo semelhante no lado do servidor. Então essa imagem ilustra bem o que é um proxy reverso.
+
+[01:49] Nós temos os clientes fazendo as requisições. Então, acessando a internet eles vão fazer uma requisição e ao invés de cair no servidor real, no servidor de aplicação ou servidor web, isso vai cair no proxy reverso, vai cair em um servidor web que está na frente de outros servidores web. Porque esse proxy reverso pode fazer algumas tarefas.
+
+[02:11] Ele pode simplesmente receber todas as requisições e mandar para vários outros servidores, sem regra nenhuma. Mas ele pode realizar algumas tarefas, por exemplo, verificar cache, fazer redirecionamento, balanço de carga etc.
+
+[02:25] Então vamos começar pela forma mais rudimentar, simplesmente redirecionando requisições. Eu recebi uma requisição aqui e eu redireciono para outro servidor. Essa é a ideia por trás de um proxy reverso.
+
+[02:39] Quando nós entendemos esse conceito de primeira, ele não parece ser muito útil. Então de início vamos configurá-lo para não ser muito útil mesmo, vamos configurar ele para ser meio bobo, só para entendermos a configuração; depois vamos ver um caso de uso real para isso.
+
+[02:55] Então, resumindo essa teoria por trás de um proxy reverso, é um servidor web que recebe requisições e manda para outros servidores, simples assim. Algumas regras podem acontecer aqui, caso nenhuma regra aconteça, ele não é tão útil assim. Mas quando começamos a implementar regras, um proxy reverso pode ser muito poderoso.
+
+[03:18] Vamos começar no próximo vídeo a configurar um proxy reverso usando NGINX, ou seja, além de servidor web, um NGINX pode servir de proxy reverso. Falei bastante, vamos para a prática no próximo vídeo!
+
+@@02
+Nomenclatura
+PRÓXIMA ATIVIDADE
+
+Entendemos neste vídeo a ideia por trás desse nome que pode ser assustador: Proxy Reverso.
+Por que o nome é Proxy REVERSO e não apenas Proxy?
+
+Porque o conceito é o oposto do que um proxy faz
+ 
+Alternativa errada! Um proxy reverso faz exatamente o que um proxy faz, mas na outra ponta da conexão.
+Alternativa correta
+Porque normalmente um proxy fica no lado do cliente
+ 
+Alternativa correta! O conceito padrão de proxy é algo que fica no lado do cliente interceptando os pacotes de rede. Como nesse caso o proxy está no lado do servidor, chamamos de proxy reverso.
+Alternativa correta
+Porque podemos encaminhar requisições de forma reversa
+ 
+Alternativa errada! Essa afirmação nem faz muito sentido para ser sincero.
+
+@@03
+Configurando
+
+[00:00] Vamos finalmente configurar realmente o proxy reverso.
+[00:05] O que eu quero fazer? Eu vou configurar daquela forma bem simples e que não vai ter muita utilidade agora, só para conhecermos a sintaxe, para entendermos a lógica. Depois falaremos de mais utilidades reais.
+
+[00:17] O que eu quero fazer é - se você se lembra, nós temos dois servidores rodando: um que no meu computador está na porta 8080, que é aquele com as configurações padrão do NGINX e com a mensagem padrão; e outro que nós criamos na porta 80, na porta padrão do HTTP.
+
+[00:32] O que eu quero fazer é: sempre que eu acessar esse servidor na porta 8080, eu quero que ele faça o proxy reverso para o outro servidor, da porta 80. Então se eu vier aqui, por exemplo, e acessar no navegador http://localhost:8080/teste.html, eu não quero ver essa mensagem de não encontrado, eu quero ver aquela mensagem do arquivo teste, ou seja, eu quero acessar aquele outro servidor.
+
+[00:55] Então vamos voltar para a raiz. Como que podemos fazer isso? Vamos nos arquivos de configuração. Eu vou acessar o arquivo ‘nginx.conf’, que é onde está aquele nosso servidor padrão.
+
+[01:10] Com isso, eu vou na parte de ‘server’ onde temos o nosso ‘root’, ou seja, aqui no nosso ‘location’ onde temos o nosso ‘root’ e o ‘index’. Eu posso tirar esses dois aqui, eu não vou utilizá-los. Eu não vou acessar diretamente algum arquivo, nem nada do tipo.
+
+[01:24] Então o que eu quero fazer é: acessei o ‘location’, alguma coisa nesse servidor, ou seja, partindo de ‘/qualquer-coisa’. O que eu vou fazer é um proxy pass, ou seja, utilizando o conceito de proxy eu vou passar essa requisição para: proxy_pass http://localhost:80;.
+
+[01:45] Só que, de novo - como ‘:80’ é a porta padrão HTTP eu posso remover o ‘:80’. Então, com isso eu tenho uma configuração de proxy reverso. É bastante simples, tudo o que eu preciso informar é a diretiva ‘proxy_pass’ e o destino para onde eu vou mandar essa requisição.
+
+[02:03] Então, com isso eu vou salvar e sair. Vou verificar se eu não digitei nada errado. Aparentemente está tudo certo. E vou recarregar com o comando nginx. -s reload.
+
+[02:14] Agora o que eu espero é: quando eu atualizar o navegador, eu quero ver o arquivo padrão, o ‘Arquivo index’. Então quando eu atualizo, aparece ‘Arquivo index’.
+
+[02:25] Se eu tento acessar o http://localhost:8080/teste.html, eu estou no ‘Arquivo teste’.
+
+[02:31] Se eu tento acessar alguma coisa que não existe, eu espero ver aquela mensagem de erro que configuramos no outro servidor. Escrito ‘Mensagem de erro’.
+
+[02:38] Então, agora quando eu acesso um servidor, ele está fazendo proxy para um outro servidor, pegando a resposta e nos devolvendo.
+
+[02:46] Então, veja como é simples configurarmos um proxy reverso usando o NGINX. Mas, como eu comentei, ainda não tem muita utilidade no que estamos fazendo aqui. Então vamos fazer um cenário um pouco mais útil.
+
+[02:58] Vamos trabalhar com outro servidor fora do NGINX e quando chegar uma requisição para o NGINX, se ele atender à algumas regras, mandamos para esse outro servidor - um servidor de aplicação, por exemplo. Mas vamos fazer isso no próximo vídeo!
+
+@@04
+Servidor 2 em 1
+
+[00:00] Agora vamos ver uma utilidade, algo um pouco mais real para nós utilizarmos o proxy reverso do NGINX.
+[00:08] Imagine o seguinte cenário: eu tenho um servidor de aplicação rodando alguma coisa e eu tenho também, além de uma aplicação, arquivos no meu sistema. Então, por exemplo: o site da Alura.
+
+[00:21] Eu tenho algum servidor rodando em alguma linguagem, que vai fazer a lógica para verificar quais cursos estão cadastrados no banco de dados, as novidades que foram inseridas, promoções etc.
+
+[00:32] Mas além dessa lógica, eu também tenho arquivos estáticos. Arquivos de CSS para estilizar a página, imagens, o próprio HTML... Enfim. Dessa forma, o que eu tenho?
+
+[00:44] Eu tenho arquivos estáticos que não precisam de processamento nenhum, eu só recebo essa requisição e posso devolver esses arquivos muito rápido; e tenho algumas coisas, algumas URLs, alguns locations que precisam ser processados por um servidor de aplicação.
+
+[01:00] Então, podemos usar o proxy reverso para recebermos requisição e devolvermos muito rápido se for algum arquivo estático - inclusive fazer cache e esse tipo de coisas. Agora, se for alguma rota, alguma URL que precise de lógica e que precisa ser processada, eu mando para o nosso servidor de aplicação.
+
+[01:19] Então o que eu quero fazer é, por exemplo: eu tenho aqui o meu localhost, tenho configurado esse servidor. Eu quero que quando eu tentar acessar alguma coisa .php, ele mande para um servidor que está rodando PHP.
+
+[01:33] Agora se for qualquer coisa que não termine com .php, nós mantemos a nossa regra que já tem lá. Então vamos ver como que podemos fazer isso.
+
+[01:40] Eu vou voltar para o terminal. Vou configurar aquele nosso site que está dentro de ‘servers’, que no meu computador é aquele que temos na porta padrão ‘:80’. Então vou configurar ele aqui que está ouvindo a porta ‘80’ e eu vou adicionar um novo ‘location’. Aqui vamos aprender uma nova regra interessante.
+
+[02:02] Aqui em location, como eu comentei, além de ter strings chapadas eu posso ter expressões regulares. Então vou ter aqui, através do acento til (~), eu indico que eu vou ter uma expressão regular e que ele leve em consideração letras maiúsculas e minúsculas. Se eu quiser ignorar letra maiúscula e minúscula, eu posso usar til e asterisco (~*).
+
+[02:24] Então, o que eu quero fazer é pegar a location de qualquer coisa que termine com .php, location ~ \.php. Então eu preciso colocar essa barra invertida aqui porque o ponto (.), em uma expressão regular, significa qualquer carácter. Então eu boto essa barra invertida () para indicar que não é qualquer caracter, é o caractere ponto mesmo.
+
+[02:42] Eu posso indicar ainda que isso deve ser o final desse ‘location’, adicionando o cifrão ($). Dessa forma eu tenho um novo ‘location’.
+
+[02:48] Aqui o que eu quero fazer é um proxy reverso. Eu quero que quando alguma requisição chegar para algo que termine com ‘.php’, eu vou mandar para o servidor de PHP e ele vai processar isso aqui.
+
+[03:00] Então eu posso usar o comando proxy_pass http://localhost:8000. Dessa forma, eu tenho dois ‘locations’. Se é alguma imagem, se é algum arquivo estático, o NGINX já vai devolver diretamente, ou seja, isso vai ser muito rápido. Agora se for alguma algum arquivo PHP, o que ele vai fazer é acessar o servidor de PHP que vai fazer o processamento que tem que fazer.
+
+[03:30] Se você não conhece PHP, você pode usar qualquer outra regra aqui. Você pode usar, por exemplo, um Ngrok para servir; você pode usar o HTTP Server do Node; você pode subir um Tomcat para o Java - mas aqui, para manter muito simples eu vou utilizar o PHP.
+
+[03:46] Não precisa se preocupar em reproduzir exatamente isso. Se você tiver o PHP na sua máquina, faça junto comigo; senão você pode adaptar isso para a sua linguagem.
+
+[03:54] Mas continuando, que eu já estou falando bastante! Vou salvar isso aqui e fazer o reload da configuração. Só que você deve estar se perguntando: “Mas e o servidor que está lá na porta 8000 de PHP?”
+
+[04:06] Então vou subir ele aqui mesmo, sem ter arquivo nenhum, eu vou subir em php -S localhost:8000. Então, teoricamente, sempre que eu fizer uma requisição “/algumacoisa.php’ ele vai mandar para esse servidor aqui de PHP. Como eu não tenho nenhum arquivo PHP, ele vai mostrar que não foi possível encontrar o arquivo.
+
+[04:25] Então, vamos lá! Eu vou tentar acessar no navegador http://localhost/algum.php. E quando eu acesso, ele bate no servidor HTTP.
+
+[04:34] Repare que a resposta é diferente, e se eu vejo aqui no terminal ele acessou realmente o nosso servidor PHP.
+
+[04:40] Então essa é uma aplicação pouco mais real de um proxy reverso. Se nós temos arquivos estáticos, simplesmente devolve. Não precisamos passar por um servidor de aplicação para isso.
+
+[04:50] Agora, se é algo que demanda processamento, nesse caso sim, nós vamos fazer o proxy reverso e mandar para um servidor de aplicação.
+
+[04:58] Quero deixar bem claro que essa não é a única forma de mandarmos para um servidor de aplicação, eu estou mandando diretamente de uma outra requisição HTTP. Só que existem outros protocolos que nós poderíamos utilizar, mas isso pode ser assunto para o futuro.
+
+[05:12] Aqui já vimos na prática como termos uma utilização real de um proxy reverso, mas essa não é nem a única forma de implementarmos e nem a única utilidade. Então no próximo capítulo vamos falar de um cenário bastante real, onde utilizamos proxy reverso.
+
+@@05
+Necessidade real
+PRÓXIMA ATIVIDADE
+
+Neste vídeo nós fizemos a aplicação mais comum de um proxy reverso. Fazer com que algumas requisições sejam enviadas para um servidor de aplicação.
+Por que realizar um proxy reverso e não apenas deixar o servidor de aplicação lidar com todas as requisições?
+
+Com nginx na frente podemos responder arquivos estáticos muito mais rapidamente.
+ 
+Alternativa correta! Esse é um dos principais motivos. O nginx é um servidor incrivelmente performático, então nós ganhamos muito ao não enviar todas as requisições para o servidor de aplicação. O nginx pode enviar diretamente os arquivos estáticos sem processar nada, além de poder definir cache, compressão, etc.
+Alternativa correta
+Com nginx na frente nosso servidor de aplicação pode ficar offline às vezes sem problemas.
+ 
+Alternativa correta
+Não há nenhum motivo real para realizar esta tarefa.
+
+@@06
+Faça como eu fiz
+PRÓXIMA ATIVIDADE
+
+Chegou a hora de você seguir todos os passos realizados por mim durante esta aula. Caso já tenha feito, excelente. Se ainda não, é importante que você execute o que foi visto nos vídeos para poder continuar com a próxima aula.
+
+Continue com os seus estudos, e se houver dúvidas, não hesite em recorrer ao nosso fórum!
+
+@@07
+O que aprendemos?
+PRÓXIMA ATIVIDADE
+
+Nesta aula, aprendemos:
+Conhecemos o conceito de proxy reverso
+Configuramos um proxy reverso na prática
+Vimos quando se faz necessário um proxy reverso
