@@ -4,8 +4,11 @@ CURSO NGINX:
 servidor Web, Proxy Reverso e API Gateway
 
 sudo lsof -i:8080
-
 kill -9
+
+brew services start jenkins-lts
+brew services stop jenkins-lts
+brew services restart jenkins-lts
 
 @01-Conhecendo a ferramenta
 
@@ -186,3 +189,254 @@ Aprendemos o que é Nginx
 Vimos o propósito de um servidor web
 Aprendemos a instalar o Nginx
 Entendemos como o Nginx funciona
+
+#### 22/08/2023
+
+@02-Servidor HTTP
+
+@@01
+Arquivos de configuração
+
+[00:00] E aí, pessoal? Boas-vindas de volta a mais um capítulo desse treinamento, onde vamos começar a brincar um pouco com o NGINX. Vamos entender como funciona um servidor web.
+[00:09] E como eu comentei, isso aqui já é um servidor web rodando, ele já está nos respondendo de forma válida. Então vamos entender o que ele fez e o que ele já tem por padrão.
+
+[00:20] Então vou vir aqui no meu terminal e eu vou digitar o comando nginx -h. O que isso vai nos mostrar? Vai nos mostrar a ajuda. Ele mostra primeiro a versão que eu estou utilizando, o uso que eu posso fazer aqui e todas as opções que eu posso passar.
+
+[00:37] Eu tenho algumas informações interessantes aqui. Primeiro: ele mostra no meu sistema operacional qual é o caminho de prefixo, o caminho onde tem as configurações e onde tem o que eu preciso conhecer.
+
+[00:50] Então repare aqui, dentro desse arquivo eu devo ter provavelmente aqueles nossos arquivos que estam gerando essa página aqui. Posso ter mais arquivo de configuração etc.
+
+[01:04] Eu tenho aqui arquivos de log, para onde as coisas vão ser salvas. Eu tenho arquivos de configuração padrão, então repare que aqui eu já vejo um arquivo de configuração padrão. Então acho que esse é um lugar interessante para nós começarmos.
+
+[01:19] No seu computador esse caminho pode ser diferente. Então, através dessa informação é que vamos entender o que vamos analisar. Você vai abrir esse arquivo padrão em qualquer editor de texto. Eu aqui vou abrir no ‘vim’ para não precisar sair do terminal.
+
+[01:35] Então vou digitar o comando vim /usr/loca/etc/nginx/nginx.conf. Então vamos entender o que está acontecendo. Aqui você vai reparar que tem um monte de linhas que começam com cerquilha (#). Isso significa que essas linhas são ignoradas, elas não têm valor, são somente comentários.
+
+[01:57] Então para nós visualizarmos isso um pouco melhor aqui no meu computador, eu vou fazer um outro comando para ler esse arquivo sem esses comentários. Mas você pode manter seu editor de texto aberto que vamos editar por lá.
+
+[02:09] Então já tem os comando aqui e essas são as configurações realmente carregadas, sem espaço em branco, sem os comentários etc.
+
+[02:17] Então repare que temos bastante coisas e podemos até ficar perdidos em algumas coisas. Eu tenho aqui o número de ‘worker_processes’, então aqui por padrão ele está colocando só ‘1’ para mim.
+
+[02:31] Eu posso mudar essa configuração para ‘auto’, e provavelmente na sua instalação de Linux isso já veio como ‘auto’, mas eu vou manter esse ‘1’ porque nós não vamos tratar de performance nesse treinamento.
+
+[02:43] Aqui ele nos diz quantas requisições e conexões o mesmo ‘worker’ pode receber. Isso aqui é o limite que um processo pode ter de file descriptors. É o limite que um processo pode ter, no meu sistema operacional, de coisas assíncronas, vamos chamar assim.
+
+[03:01] Então no Linux e em sistemas Unix no geral, tudo é considerado um arquivo. Então se eu tenho socket, se eu tenho uma pasta ou um processo, tudo pode ser visto como um arquivo. Então isso aqui é o número de file descriptors, ou seja, descritores de arquivo; para cada processo poder trabalhar.
+
+[03:19] Então podem ser socket, podem ser conexões usando outra forma ou alguma outra técnica, mas no final das contas esse é o número de conexões que eu posso ter. Eu posso mexer no meu sistema operacional para aumentar isso - mas de novo, não vou mexer por agora.
+
+[03:33] E agora entramos na parte de configuração do HTTP propriamente dito. Então, o que nós temos aqui? Ele faz o ‘include’ de outro arquivo, não vou me preocupar com isso. Ele coloca aqui que se nenhum tipo for definido na resposta, ele vai colocar esse tipo aqui. Não vamos nos preocupar com isso. Passa outras informações, mas esse é o ponto principal, é onde ele configura o nosso servidor web.
+
+[03:57] Então repare que ele está ouvindo a porta 8080, em um nome de servidor ‘localhost’.
+
+[04:03] Se tivéssemos algum host configurado na nossa máquina, ou seja, no arquivo de hosts do sistema operacional. Se disséssemos ‘alura.com.br’ iria ser direcionado para nossa máquina. Então aqui se colocássemos ‘alura.com.br’, ele conseguiria pegar essa requisição e tratar diretamente aqui no nosso servidor.
+
+[04:24] Não vamos mudar isso, vamos utilizar ‘localhost’, mas em um servidor real aqui no server_name você coloca o nome do domínio do seu site.
+
+[04:34] Aqui em 'location' vem a configuração que indica o que fazer quando ele receber alguma requisição. Se essa requisição for para ‘/’, ou seja, para alguma coisa que não tem caminho nenhum, então ele vai buscar dentro da pasta HTML o que nós informarmos.
+
+[04:51] E se nós não informarmos nada, se realmente a requisição for só ‘/’ e não ‘/ mais alguma coisa’, caso não informemos nada o que ele vai fazer é buscar um arquivo de índice, um arquivo principal que pode se chamar ‘index.html’ ou 'index. htm'.
+
+[05:08] Então, com isso, o que eu tenho de informação? Eu sei que dentro da pasta HTML que está naquela pasta de prefixo que nós vimos, eu preciso ter um arquivo ‘index.html’ que vai ter esse conteúdo aqui da página de boas-vindas.
+
+[05:22] Então, vamos testar isso? Vamos ver de novo qual é aquele caminho - que é isso daqui: '/usr/local/Cellar/nginx/1.19.8/'.
+
+[05:28] Então aqui dentro eu espero ter uma pasta HTML e eu espero que aqui dentro eu tenha um arquivo ‘index’. Então vamos abrir esse arquivo ‘index’ e eu vou abrir com o nosso ‘vim’.
+
+[05:40] Aqui, ao invés de botar ‘Welcome to nginx’, eu vou adicionar aqui nesse título <h1>Welcome to nginx (Teste)!</h1>.
+
+[05:48] Então eu alterei esse conteúdo, salvei e vou atualizar o navegador.
+
+[05:54] Então eu já entendi o que está acontecendo por trás dessa nossa configuração.
+
+[05:58] Agora, um último detalhe é que via de regra, o que vamos fazer é não editar esse arquivo - e eu acredito que no Linux você nem vai ter esse server aqui no arquivo principal.
+
+[06:13] Esse arquivo só vamos editar em cenários de tuning, de otimização e esse tipo de coisa. Mas para configurarmos realmente um servidor, nós vamos acessar essa pasta aqui de ‘servers’.
+
+[06:24] Então aqui dentro nós vamos criar arquivos de configuração específicos para cada servidor que quisermos. Então o que eu vou fazer é criar um novo servidor HTTP, que ao invés de ouvir a porta 8080, vai ouvir a porta padrão HTTP: a porta 80.
+
+[06:40] Se no seu computador esse servidor padrão que o NGINX traz estiver ouvindo a porta 80 então você vai fazer o contrário. Nós vamos criar um novo servidor que ouça a porta 8080.
+
+[06:51] Então nós vamos criar um novo servidor que ouça uma porta diferente e que vá carregar algum outro arquivo que iremos decidir ainda. Só que isso tudo iremos fazer a partir do próximo vídeo.
+
+@@02
+Caminhos dos arquivos
+
+Vimos neste vídeo que há mais de um local onde vamos configurar arquivos do nginx.
+Como saber onde está o arquivo de configuração principal?
+
+Gravando o caminho em cada sistema operacional
+ 
+Alternativa correta
+Através do comando nginx -t
+ 
+Alternativa correta
+Através do utilitário da CLI nginx
+ 
+Alternativa correta! Este comando nos fornece diversas informações. Ao digitarmos nginx -h uma ajuda é exibida, e lá podemos ver o caminho do arquivo de configuração.
+
+@@03
+Criando um servidor
+
+[00:00] Vamos finalmente configurar do zero um servidor nosso, não vamos mais utilizar esse servidor aqui que está todo configurado.
+[00:09] Então, como vamos fazer isso? Se você estiver no Linux, ao invés de ter esse server aqui, muito provavelmente só tem um include de um outro lugar, de um outro arquivo - e muito provavelmente esse outro lugar tem um arquivo chamado "default.conf".
+
+[00:25] Dependendo da sua instalação, você pode ter pastas conhecidas como sites enabled e sites available, ou somente esse arquivo default.conf. Mas você vai ter todas essas informações dando uma olhada nesse arquivo aqui, 'includ server/', onde você tem os includes.
+
+[00:41] Então dentro dessa pasta que tem o include é que vamos criar um novo arquivo, ou caso você já tenha o default.conf, você pode utilizar ele. Inclusive, eu vou até utilizar esse mesmo nome default.conf para termos algo parecido.
+
+[00:55] Então, eu preciso achar essa pasta servers e esse meu arquivo de configuração está nesse caminho, ‘/usr/local/etc/nginx/’.
+
+[01:01] Então, eu espero que nesse caminho tenha uma pasta servers. Vamos ver aqui. Eu vou utilizar o ‘vim’ para editar algum arquivo e quando eu começo a digitar ‘servers’ e pressiono a tecla “Tab”. Ele completou, então essa pasta existe.
+
+[01:13] Então vou criar um arquivo default.conf. É um arquivo vazio, repare que ele está mostrando a mensagem ‘New File’.
+
+[01:19] Então vamos começar a editar. Eu vou criar um novo servidor server {}.Vou colocar dentro das chaves o que eu quero com esse servidor agora, que é listen 80; ou seja, eu quero ouvir a porta 80, que é a porta padrão do HTTP.
+
+[01:32] De novo, se na sua instalação aquele servidor padrão já veio na porta 80, então aqui você vai colocar ‘8080’ - porque isso depende muito do sistema operacional, da versão etc. Só para irmos alternando.
+
+[01:48] Estou ouvindo a porta 80 aqui e eu vou colocar server_name localhost; porque eu estou acessando a minha própria máquina e eu não tenho nenhum outro nome para minha máquina, só ‘localhost’.
+
+[02:00] Se eu não colocar nenhum server name eu posso acessar através do IP da minha máquina, ou ‘127001’ ou “000”, enfim - mas eu vou dar um nome aqui para continuarmos utilizando o ‘localhost’.
+
+[02:12] Tenho o servidor configurado. Agora eu quero informar para ele: “quando chegar alguma requisição para qualquer lugar, você vai tentar buscar os arquivos em alguma pasta”.
+
+[02:24] Quando chegar uma requisição em location /, ou seja, a partir de qualquer lugar e aqui nessa ‘location’ nós podemos fazer bastante coisas. Eu posso ter alguma rejects alguma coisa; eu posso dizer que quando chegar ‘/alguma-coisa’ e qualquer resto que vier, eu vou ter essa configuração aqui.
+
+[02:46] Mas no meu caso, como eu coloco só barra (/), significa que qualquer requisição que chegar nesse servidor, vai entrar nesse bloco.
+
+[02:55] Então fica aí uma dica, bem para o futuro que iremos trabalhar. Posteriormente eu poderia, por exemplo, ver se essa ‘location’ é um arquivo PHP. Se for um arquivo PHP, mando isso para outro lugar, para o servidor de aplicação. Mas enfim, vamos focar no que temos aqui.
+
+[03:11] Sempre que chegar uma requisição para qualquer lugar, eu vou definir essas configurações. Qual vai ser a raiz dos arquivos desse meu servidor? Qual vai ser o root? Então, eu vou colocar isso como uma pasta do meu usuário. Você vai colocar uma pasta que você preferir. De novo, a recomendação é que não tenha nenhum caminho com espaços.
+
+[03:32] Então no meu caso, eu vou adicionar nessa pasta root /Users/vinicius.dias/Dev/nginx;. Então aqui dentro eu vou ter os meus arquivos HTML, de imagem etc.
+
+[03:45] Repare que eu estou usando o caminho completo. Já naquele servidor, naquele arquivo de configuração padrão, naquele include, ele tava passando um caminho relativo. Eu estou passando o caminho absoluto porque eu não quero meus arquivos aqui dentro da pasta ‘server’.
+
+[04:01] Então eu vou botar em outro lugar completamente diferente, para isso eu coloco o caminho completo. Se você está no Linux o padrão também é desse mesmo formato. Se você está no Windows, sempre comece com ‘C:’ ou ‘D:’ - o nome do seu disco.
+
+[04:16] Defini o root do meu servidor, mas e se eu acessar simplesmente ‘localhost’? Fizer isso sem colocar o nome de algum arquivo? Eu posso definir um arquivo padrão que vai ser carregado através do ‘index’.
+
+[04:29] Então vou dar o nome deste arquivo de index.html, igual nós já tínhamos lá. Teoricamente configurado, agora se eu vir aqui no meu navegador e acessar https://localhost:80 ou eu posso até omitir esse ‘80’ (porque é a porta padrão HTTP), eu espero receber alguma coisa tentando acessar aquele arquivo, ou algo do tipo, um ‘404’ou algo assim.
+
+[04:57] Mas eu não consegui acessar, ele está recusando a conexão. Por que será que isso está acontecendo? Será que nosso arquivo de configuração está errado? Será que faltou alguma coisa? Vamos entender um pouco melhor esse processo no próximo vídeo.
+
+@@04
+Entendendo a location
+
+Finalmente configuramos um servidor web nosso, usando a diretiva server e dentro dela temos a diretiva chamada location.
+Qual o propósito dessa diretiva location na configuração de um servidor web no nginx?
+
+
+Alternativa correta
+Informar qual caminho acessado cairá nas regras a seguir
+ 
+Alternativa correta! Se definirmos um location /, tudo que começar com / (que no caso é literalmente tudo) cairá nesse conjunto de regras. Nessas regras podemos definir qual o diretório raiz do projeto, qual o arquivo padrão, regras de redirecionamento, etc.
+Alternativa correta
+Informar o caminho raiz do nosso site / sistema
+ 
+Alternativa errada! Dentro de location podemos definir mais coisas além de root.
+Alternativa correta
+Informar o arquivo padrão a ser carregado em nosso site / sistema
+ 
+Alternativa errada! Dentro de location podemos definir mais coisas além de index.
+
+@@05
+Sinais e comandos
+
+[00:00] Nós tentamos configurar o nosso servidor, mas teve um problema aqui de conexão recusada. Então vamos entender o que aconteceu.
+[00:10] Quando eu inicializei o meu servidor web,o meu NGINX, ele leu aquele ‘nginx.conf’, aquele arquivo padrão, carregou tudo o que tinha para carregar e pronto, subiu o nosso servidor.
+
+[00:21] Eu fui lá, eu criei um arquivo de configuração, só que o NGINX não está nem aí para mim porque ele já carregou todas as configurações que tinha que carregar. Então eu preciso informar: “olhe só, NGINX, eu mudei alguma coisa. Eu preciso que você recarregue as configurações”. Então, para isso vamos aprender mais um comando aqui do NGINX.
+
+[00:42] Deixe-me limpar a tela e usar o comando nginx -h para nós vermos aquela ajuda. Com esse -s nós podemos informar sinais para o processo principal. Podemos parar o processo; podemos pedir para ele sair, nós podemos reabrir o processo ou, exatamente o que nós queremos, recarregar as configurações desses processos.
+
+[01:05] Então tudo o que precisamos fazer aqui é digitar o comando nginx -s reload. Teoricamente está tudo certo, ele recarregou as configurações. Agora, se eu tentar acessar pelo navegador nós temos o “404 Not Found” - que é exatamente o que eu esperava, porque nós não criamos o arquivo onde ele está tentando buscar o nosso ‘root’.
+
+[01:23] Então, o que nós tivemos aqui? Nós passamos um sinal para o serviço do NGINX. Nós podemos também fazer algumas outras coisas. Por exemplo: podemos tentar verificar se nossos arquivos de configuração estão corretos. Então se eu faço o comando nginx -t, ele verifica que a sintaxe está OK, então o teste deu tudo certo e o nosso arquivo de configuração está beleza.
+
+[01:47] Se eu tentar acessar aquele nosso arquivo de configuração e tirar um ponto e vírgula, por exemplo, salvar e fazer o comando nginx -t - aí ele já nos avisa que esse arquivo tem um erro. Então vamos corrigir o erro e adicionar o ponto e vírgula. Então dessa forma conseguimos ver se está tudo OK com o arquivo e conseguimos recarregar as configurações.
+
+[02:10] Vamos de novo dar uma olhada aqui no arquivo 'default.conf' e criar essa pasta dentro do meu usuário. Em ‘Dev’ eu quero criar uma pasta ‘nginx’ e ter o nosso arquivo ‘index.html’. Deixe-me sair daqui.
+
+[02:25] Aqui, no terminal, eu já estou na pasta do meu usuário, então dentro de ‘Dev’ eu quero criar ‘nginx’. Agora dentro dessa pasta ‘nginx’, eu vou criar o nosso ‘index.html’, então vou simplesmente escrever aqui ‘Arquivo index’.
+
+[02:39] Então você vai, na pasta onde você definiu como ‘root’, criar o arquivo ‘index.html’ e botar qualquer conteúdo que você quiser. Pode escrever um HTML válido, ou no meu caso aqui, como sou preguiçoso, só uma mensagem. Salvei e posso vir no navegador e carregar nosso arquivo “index”.
+
+[02:55] “Vinicius, por que nesse cenário você não precisou recarregar as configurações?” Porque isso que eu fiz não foi mudar nenhuma configuração. Eu mudei um arquivo que o NGINX vai tentar acessar quando ele recebe a requisição. Então ele recebeu a requisição e agora o arquivo existe. Isso não é uma configuração.
+
+[03:12] E se eu tiver um arquivo diferente de ‘index’, por exemplo? Se eu tiver aqui um ‘teste.html’, então escrevo ‘Arquivo teste’. Como será que eu posso acessar ele? Lá no nosso ‘location’ eu estou dizendo que barra (‘/’) vai acessar “index”.
+
+[03:28] Só que na verdade, como eu já comentei, isso aqui significa que sempre que chegar uma requisição para barra e qualquer coisa mais para frente, ele vai tentar buscar aqui nesse ‘root’.
+
+[03:38] Então se eu digitar aqui na barra de endereço do navegador, além do barra, o ‘teste.html’: https://localhost:80/teste.html ele vai acessar o nosso arquivo teste. Agora, se eu acessar alguma coisa que não existe - vou digitar ‘alguma-coisa’ - ele vai tentar encontrar esse arquivo ‘alguma-coisa’ e vai dar um “404”.
+
+[03:54] Só que essa mensagem “404”, espero que você concorde comigo, não está muito bonita. Além de não ser a mais bonita possível, ela está nos trazendo informações do nosso servidor: "nginx/1.19.8".
+
+[04:06] É interessante não expor esse tipo de informação para que atacantes não tenham esse tipo de informação, porque assim ele pode buscar as vulnerabilidades conhecidas nessa versão e tentar explorar isso.
+
+[04:17] Então o que queremos fazer para o nosso site é criar uma página de “404” bonita ou uma página geral de erros mais bonita. Então vamos entender como podemos configurar páginas de erro usando o NGINX no próximo vídeo.
+
+@@06
+Páginas de erro
+
+[00:00] Infelizmente quando desenvolvemos uma aplicação, um site ou um sistema, erros acontecem. Quando estamos falando de HTTP, erros são representados através de códigos HTTP. De novo, por isso é importante fazermos o treinamento de HTTP, para entendermos melhor como isso funciona, mas eu vou super simplificar um conceito aqui.
+[00:22] Se aconteceu algum erro e estamos utilizando bem o HTTP, um código de resposta é devolvido. Então, o código de erro “404” indica que algum recurso que eu estou tentando acessar não foi encontrado.
+
+[00:39] O código “200” indica que está tudo OK, que nós encontramos o que tinha que encontrar e processamos o que tinha que processar. Então existem diversos códigos HTTP.
+
+[00:50] Os códigos de erro estão na faixa “400” quando é algum erro do cliente, ou seja, o cliente digitou a URL errada, por exemplo. Ou na faixa “500” quando é erro no servidor. Então, por exemplo: o servidor não está disponível, o servidor de aplicação caiu, meu banco de dados está fora ou alguma coisa assim.
+
+[01:07] Então vamos configurar exatamente o erro “404” para ser direcionado para uma página nossa, uma página que nós podemos configurar como quisermos, deixar ela bonita etc.
+
+[01:17] Então, vamos lá! Já estou aqui com meu arquivo de configuração aberto e fora de location eu vou adicionar o comando error_page - pode ser antes ou depois, tanto faz.
+
+[01:28] E aqui, o que eu posso informar? Os códigos de erro, por exemplo: “404”, “400”, “401” etc. - e isso vai ser direcionado para ‘/erro.html’, error_page 404 400 401 /erro.html.
+
+[01:42] Então, o que vai acontecer aqui? Algum desses erros (404, 400 ou 401) aconteceu, então o NGINX vai carregar como se ele estivesse acessando uma nova requisição HTTP para ‘/erro.html’. Então, o que eu espero? Que dentro desse ‘root’ aqui eu tenha esse arquivo ‘erro.html’.
+
+[02:02] Então vamos salvar esse arquivo de configuração. Primeiro, eu vou garantir que está tudo certo e OK, se a sintaxe está certa. Então eu vou lá no meu ‘root’, que é em ‘vim Dev/nginx/error.html’. Eu vou escrever aqui "mensagem de erro", ou "código de erro", e vou poder fazer o que eu quiser aqui.
+
+[02:20] De novo, se eu tento acessar pelo navegador alguma coisa não encontrada, ele não vai carregar aquele arquivo, porque precisamos recarregar as configurações. Então eu digito o comando nginx -s reload. Configurações recarregadas quando eu atualizo... "Mensagem de erro". Por quê?
+
+[02:36] Nós tentamos acessar ‘/alguma-coisa’. Esse ‘/alguma-coisa’ não existe, então o NGINX vai identificar o erro “404”. O próprio NGINX já sabe entender isso. Então, quando acontece um erro “404” ou algum daqueles outros que nós colocamos, ele vai reagir como se fosse refazer a requisição para ‘/erro.html’ – e quando acessamos ‘/erro.html’ é exatamente essa a resposta que nós temos.
+
+[03:01] Se quisermos testar, podemos acessar no navegador ‘localhost/erro.html’ - que é exatamente isso.
+
+[03:06] Então, dessa forma, conseguimos configurar mensagem de erro. Dessa forma temos, bastante simples, um servidor web rodando. Eu posso facilmente agora criar todo meu site com HTML, CSS, imagens e arquivos em geral.
+
+[03:22] Só que nem só para isso serve o NGINX, não é só para ouvir requisições HTTP e te devolver arquivos. Então vamos começar a entender algumas outras funcionalidades que essa ferramenta tão poderosa nos traz, a partir dos próximos capítulos.
+
+@@07
+Valores válidos
+
+Aprendemos a configurar páginas de erro neste vídeo através da diretiva error_page, informando códigos e um caminho.
+Qual das alternativas a seguir é FALSA sobre configurações de páginas de erro no nginx?
+
+Alternativa correta
+Podemos redirecionar diversos erros HTTP para o mesmo caminho
+ 
+Alternativa correta
+Precisamos informar pelo menos um código HTTP para definir a página de erro
+ 
+Alternativa correta
+Precisamos definir o caminho de um arquivo existente
+ 
+Alternativa correta! Essa afirmação é falsa pois no caminho informado ao error_page nós podemos ter um valor que corresponde a alguma diretiva location.
+
+@@08
+Faça como eu fiz
+
+Chegou a hora de você seguir todos os passos realizados por mim durante esta aula. Caso já tenha feito, excelente. Se ainda não, é importante que você execute o que foi visto nos vídeos para poder continuar com a próxima aula.
+
+Continue com os seus estudos, e se houver dúvidas, não hesite em recorrer ao nosso fórum!
+
+@@09
+O que aprendemos?
+
+Nesta aula, aprendemos:
+Conhecemos o formato de configuração do nginx
+Configuramos nosso primeiro servidor web
+Aprendemos a lidar com a CLI do nginx
+Vimos como configurar páginas de erro
