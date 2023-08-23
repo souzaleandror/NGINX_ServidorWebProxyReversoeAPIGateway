@@ -475,7 +475,6 @@ O que é?
 
 @@02
 Nomenclatura
-PRÓXIMA ATIVIDADE
 
 Entendemos neste vídeo a ideia por trás desse nome que pode ser assustador: Proxy Reverso.
 Por que o nome é Proxy REVERSO e não apenas Proxy?
@@ -546,7 +545,7 @@ Servidor 2 em 1
 
 [02:02] Aqui em location, como eu comentei, além de ter strings chapadas eu posso ter expressões regulares. Então vou ter aqui, através do acento til (~), eu indico que eu vou ter uma expressão regular e que ele leve em consideração letras maiúsculas e minúsculas. Se eu quiser ignorar letra maiúscula e minúscula, eu posso usar til e asterisco (~*).
 
-[02:24] Então, o que eu quero fazer é pegar a location de qualquer coisa que termine com .php, location ~ \.php. Então eu preciso colocar essa barra invertida aqui porque o ponto (.), em uma expressão regular, significa qualquer carácter. Então eu boto essa barra invertida () para indicar que não é qualquer caracter, é o caractere ponto mesmo.
+[02:24] Então, o que eu quero fazer é pegar a location de qualquer coisa que termine com .php, location ~ \.php Então eu preciso colocar essa barra invertida aqui porque o ponto (.), em uma expressão regular, significa qualquer carácter. Então eu boto essa barra invertida () para indicar que não é qualquer caracter, é o caractere ponto mesmo.
 
 [02:42] Eu posso indicar ainda que isso deve ser o final desse ‘location’, adicionando o cifrão ($). Dessa forma eu tenho um novo ‘location’.
 
@@ -576,7 +575,6 @@ Servidor 2 em 1
 
 @@05
 Necessidade real
-PRÓXIMA ATIVIDADE
 
 Neste vídeo nós fizemos a aplicação mais comum de um proxy reverso. Fazer com que algumas requisições sejam enviadas para um servidor de aplicação.
 Por que realizar um proxy reverso e não apenas deixar o servidor de aplicação lidar com todas as requisições?
@@ -592,7 +590,6 @@ Não há nenhum motivo real para realizar esta tarefa.
 
 @@06
 Faça como eu fiz
-PRÓXIMA ATIVIDADE
 
 Chegou a hora de você seguir todos os passos realizados por mim durante esta aula. Caso já tenha feito, excelente. Se ainda não, é importante que você execute o que foi visto nos vídeos para poder continuar com a próxima aula.
 
@@ -600,9 +597,200 @@ Continue com os seus estudos, e se houver dúvidas, não hesite em recorrer ao n
 
 @@07
 O que aprendemos?
-PRÓXIMA ATIVIDADE
 
 Nesta aula, aprendemos:
 Conhecemos o conceito de proxy reverso
 Configuramos um proxy reverso na prática
 Vimos quando se faz necessário um proxy reverso
+
+#### 23/08/2023
+
+@04-API Gateway
+
+@@01
+Múltiplos serviços
+
+[00:00] E aí, pessoal? Boas-vindas de volta a mais um capítulo desse treinamento, onde estamos conhecendo bastante sobre a ferramenta NGINX, que é um servidor web que também serve como proxy reverso e algumas outras coisas ainda vamos ver nesse treinamento.
+[00:13] No capítulo anterior falamos bastante sobre proxy reverso, nós aprendemos a configurar e vimos um caso de uso real. Agora vamos falar um pouco de um cenário diferente.
+
+[00:24] Hoje em dia, principalmente, é muito falado sobre o conceito de arquitetura baseada em microsserviços. Então, só quero explicar super resumidamente o que é essa tal de arquitetura de microsserviços - até porque existem treinamentos específicos sobre esse assunto aqui na Alura. Então eu só vou pincelar para eu te mostrar o propósito desse capítulo e, o que vamos alcançar com esse capítulo.
+
+[00:48] Uma aplicação padrão (o que nós chamamos de aplicação monolítica) é uma única aplicação onde a partir do navegador, por exemplo, a partir de um site nós acessamos toda a regra de negócios, que tudo acontece, que faz o acesso ao banco de dados, por exemplo, e que nós recebemos essas informações.
+
+[01:09] Então imagine que o site da Alura é uma aplicação monolítica. Você digita “alura.com.br", essa interface vai chegar lá e vai bater na lógica de negócios. Aí essa lógica de negócios vai acessar o banco de dados para descobrir quais são os cursos cadastrados, ele vai acessar as promoções, ele vai acessar as notícias e os últimos cursos lançados. Isso tudo é processado e entregue para você.
+
+[01:32] Então essa é a ideia por trás de uma aplicação comum, uma aplicação monolítica. Só que existe uma outra forma de modelar, que é utilizando a arquitetura de microsserviços.
+
+[01:43] Então, imagine a parte logada da Alura, “cursos.alura.com.br”. Para você acessar essa parte você precisa ter uma assinatura válida e isso envolve a matrícula acadêmica, envolve a parte financeira, a parte de gamificação, onde você tem um jogador e tem pontos. Então tem muitos detalhes que não necessariamente precisam andar juntos.
+
+[02:06] O que é muito comum nos dias de hoje é você ter uma aplicação que cuida da parte financeira, você ter uma outra aplicação que cuida da parte acadêmica, ter outra aplicação que cuida da parte de gamificação ou jogos e você ter outra aplicação que cuida da parte de streaming de vídeos.
+
+[02:24] Então, dessa forma nós organizamos um sistema em várias pequenas aplicações ou serviços. Então daí vem o nome microsserviços.
+
+[02:35] Só que existe um problema se pensarmos nessa abordagem somente como eu te expliquei. Imagine “cursos.alura.com.br” e imagine que o front-end (a página em si) precisa acessar os dados dos cursos que você está matriculado, precisa exibir para você a sua sua matrícula financeira etc., ou quando sua assinatura foi feita.
+
+[02:58] Então, o front-end vai precisar saber qual é a API, qual é o servidor, qual é o serviço que lida com os detalhes financeiros; qual é o servidor, qual é o serviço, qual é o computador que lida com a parte acadêmica - e às vezes isso pode acabar mudando. Eu posso trocar de um servidor para outro, eu posso mover esse serviço.
+
+[03:20] Além disso, às vezes um serviço roda em mais de um servidor, já é outro serviço em um só, então essa parte de roteamento pode ficar bastante difícil. Como saber qual URL acessar, por exemplo?
+
+[03:33] Então, o que vamos fazer nesse capítulo é - usando o conceito de proxy reverso, usando o que aprendemos com proxy pass, o que eu quero fazer? Por exemplo, eu quero acessar a URL http://localhost:8080/ e quando eu digitar http://localhost:8080/servico1 eu quero acessar um servidor, um serviço, uma parte de uma aplicação.
+
+[03:58] Quando eu digitar http://localhost:8080/servico2, mesmo que eu esteja fazendo a requisição para a mesma URL, para o mesmo servidor, eu quero acessar um outro servidor, uma outra aplicação.
+
+[04:09] Então é isso que vamos implementar, é por isso que esse capítulo está depois da partir de proxy reverso. Porque embora o que iremos aplicar tenha um outro nome, diferente de proxy reverso, nós vamos utilizar os conhecimentos de proxy reverso para fazermos isso.
+
+[04:23] Dessa forma, voltando para o exemplo da Alura, é como se pela interface ele só precisasse conhecer “api.alura.com.br”, por exemplo. Baseado no endpoint, baseado na URL desse servidor, esse nosso proxy reverso manda para algum serviço, manda para o serviço financeiro, para o serviço acadêmico, serviço de gamificação etc.
+
+[04:48] Então é isso que vamos implementar nesse treinamento! No próximo vídeo nós vamos criar dois serviços pequenos e rotear entre eles. Fazer com que uma URL mande para um serviço e outra URL mande para outro serviço. Então te espero no próximo vídeo para botarmos a mão na massa!
+
+@@02
+Para saber mais: Microsserviços
+
+O propósito deste treinamento não é ensinar o conceito ou práticas da arquitetura orientada a microsserviços, mas caso você queira conhecer este conceito, pode conferir este treinamento: https://cursos.alura.com.br/course/microsservicos-padroes-projeto
+
+https://cursos.alura.com.br/course/microsservicos-padroes-projeto
+
+@@03
+Usando proxy_pass
+
+[00:00] Vamos criar dois serviços de exemplo. Eu vou criar dois novos servidores lá no nosso NGINX e vou criar esses dois novos servidores em um arquivo só, para nós agilizarmos o processo.
+[00:15] O que eu vou fazer? Eu vou vir aqui no terminal, pegar o nosso arquivo default, e vou copiar ele para cp /usr/local/etc/nginx/servers/default.conf /usr/local/etc/nginx/servers/microsservicos.conf.
+
+[00:33] Então nesse arquivo ‘microsservicos.conf’ eu vou ter esses nossos dois servidores. Então, vamos lá! Digitei vim /usr/local/etc/nginx/servers/microsservicos.conf.
+
+[00:43] Então aqui eu vou ter dois serviços: um eu vou colocar na porta 8001. Deixe-me numerar as linhas para ficar um pouco mais fácil, com o comando set number. Então eu vou copiar todas as linhas, só que eu não vou precisar da parte do PHP, então deixe-me remover isso daqui. Eu vou copiar essas linhas e colar aqui embaixo.
+
+[01:08] Esse outro serviço vai estar ouvindo a porta 8002. Então tenho dois serviços. Eu vou deixar um na pasta root /Users/vinnicius.dias/Dev/nginx/servico1; e outro na pasta root /Users/vinnicius.dias/Dev/nginx/servico2;.
+
+[01:26] Teoricamente está tudo certo. Vou remover essa error page da última linha, porque eu não quero criar isso. Eu só vou criar a index do ‘servico1’ e a index do ‘servico2’, só isso. Então vou salvar.
+
+[01:37] Vou criar dentro de mkdir Dev/nginx/servico1 Dev/nginx/servico2. Agora eu vou adicionar echo “Serviço 1” > Dev/nginx/servico1/index.html. Então o que eu estou fazendo com essa linha de comando?
+
+[02:02] Eu estou simplesmente adicionando o conteúdo “Serviço 1” dentro desse novo arquivo que vai ser criado. Então criei lá e vou botar o serviço dois também, .echo “Serviço 2” > Dev/nginx/servico2/index.html.
+
+[02:13] Então deixe-me garantir que não escrevi nada errado... Aparentemente está tudo certo. Agora vou usar o comando nginx -s reload. Teoricamente eu tenho dois serviços, vamos testá-los.
+
+[02:22] No navegador, acesse http://localhost:8001. Está com problema de caractere por causa de acento e eu não ter definido o charset, problema nenhum. E ao acessar http://localhost:8002 temos o serviço 2. Então eu tenho dois serviços.
+
+[02:35] Agora o que eu quero fazer é fazer que a partir do nosso localhost: 8080 (que é aquele nosso servidor padrão), eu redirecione. Quando eu chamar “serviço 1”, manda para o nosso localhost: 8001; quando chamar “serviço 2” manda para o localhost: 8002. Deixe-me ver aqui, isso aqui já está funcionando porque dentro da pasta “nginx”, eu tenho lá a pasta “servico2”, então ele buscou o arquivo “index.html”.
+
+[03:10] Eu vou remover isso daqui. Deixe-meu abrir o nosso o usr com o comando vim /usr/local/etc/nginx/nginx.conf. Eu não vou ter mais isso daqui #proxy_pass http://localhost;. Eu não vou passar mais aquele nosso proxy para o localhost:80, não vou ter mais aquele proxy.
+
+[03:31] Então quando eu fizer o reload agora, com o comando nginx -s reload, a página http://localhost:8002/servico2 não vai mais funcionar.
+
+[03:39] Agora o que eu quero fazer é mandar o que está em “/servico2” para o localhost: 8002, e o que está em “servico1” para o localhost: 8001. Então vamos fazer essa configuração, que não vai ser nada difícil.
+
+[03:51] Vou voltar para o terminal e usar o comando ‘vim /usr/local/etc/nginx/nginx.conf’. Eu posso até copiar a linha de location se eu quiser. Vou colar e vou colar de novo aqui.
+
+[04:00] Quando eu acessar location /servico1 { o que eu quero fazer é um proxy_pass http://localhost:8001/;. Aqui eu vou adicionar a barra no final, por quê? Você já vai entender.
+
+[04:15] Deixe-me voltar para o último comando location - que será o location /servico2 { - proxy_pass http://localhost:8002/;.
+
+[04:23] E agora deixe-me te explicar o motivo para aqui na segunda linha do primeiro location eu não ter a barra no final e nessa última linha de location eu ter.
+
+[04:31] Quando eu acessar ‘/servico1’, eu quero mandar para localhost: 8001. Só que se eu digitar ‘/servico1/teste’, eu quero mandar para “localhost:8001/teste” e não para “localhost:8001/servico/teste”.
+
+[04:48] Então se eu remover essa barra aqui, ele vai adicionar o que passamos no location aqui no final. Já, se eu coloco a barra, ele vai ignorar o que recebeu no location do servidor original e mandar só a partir de “servico1”.
+
+[05:02] Então, assim nós teoricamente já temos configurado!
+
+[05:11] Vamos fazer o comando nginx -t para garantirmos que está tudo certo. Em seguida, o comando nginx -s reload. Agora, teoricamente, quando eu acessar no navegador http://localhost:8080/servico1, ele vai acessar o “Serviço 1”; e quando eu vier em http://localhost:8080/servico2, ele vai acessar o “Serviço 2”.
+
+[05:32] Deixe-me renomear com o comando mv Dev/nginx/servico2/index.htlm Dev/nginx/servico2/servico.html. Ao acessar no navegador http://localhost:8080/servico2, ele não tem mais a pasta “index”. Então eu vou acessar http://localhost:8080/servico2/servico.html e tudo continuará funcionando.
+
+[05:51] Porque sempre que eu acesso o “/servico2”, o que vem depois vai ser mandado para aquele nosso servidor localhost: 8002. Então seria a mesma coisa que eu fazer isso daqui.
+
+[06:03] O que fizemos agora foi adicionarmos um servidor que nos redireciona para serviços diferentes e que realizam tarefas específicas.
+
+[06:12] Então, eu poderia, por exemplo, aqui na nossa configuração (imagine aquele seu servidor ‘api.alura.com.br’) colocar aqui na localização ‘/financeiro’ e eu mandar para o nosso serviço de financeiro; ‘/academico’. Eu mandaria para o servidor que tem o serviço acadêmico.
+
+[06:32] Então, dessa forma, eu teria um ponto de entrada para acessar vários servidores. Isso tem um nome bastante específico – e é sobre esse nome e essa técnica que eu vou falar no próximo vídeo!
+
+@@04
+Propósito
+
+Aprendemos neste vídeo como ter um servidor web que faz o redirecionamento para outros múltiplos servidores baseado na URL recebida.
+Antes de assistir o próximo vídeo, por que você acredita que essa prática pode ser útil?
+
+Para centralizar o acesso a múltiplos serviços em um único host
+ 
+Alternativa correta! Dessa forma todas as requisições podem ser feitas para o mesmo servidor, facilitando a vida do cliente, dentre outras vantagens.
+Alternativa correta
+Para aumentar a performance de cada servidor
+ 
+Alternativa correta
+Não há motivo real para aplicar esta técnica
+
+@@05
+Entendendo o conceito
+
+[00:00] Vamos recapitular rapidamente o que nós fizemos no último vídeo, porque foi um pouco complexo, apesar de todos os conceitos que já vimos no capítulo anterior.
+[00:12] O que nós fizemos foi ter no servidor que no meu computador está ouvindo a porta 8080. Nós temos dois proxy, ou seja, proxy reverso para dois serviços diferentes.
+
+[00:24] Sempre que eu acessar ‘/servico1 algumacoisa’, esse ‘algumacoisa’ vai ser enviado para o serviço que está rodando na porta 8001. Se eu acessar ‘/servico2 algumacoisa’ esse ‘algumacoisa’ vai ser enviado para o ‘localhost:8002’.
+
+[00:41] Então, dessa forma nós construímos um proxy reverso para dois serviços diferentes - e é muito comum que tenhamos serviços diferentes realizando tarefas diferentes. Principalmente quando utilizamos uma arquitetura orientada a microsserviços.
+
+[00:55] Então o que nós fizemos aqui foi criar serviços diferentes e ter um ponto de entrada através desse servidor para esses serviços - e esse ponto de entrada tem um nome.
+
+[01:07] Em uma arquitetura de microsserviços, quando nós temos um ponto único de entrada, chamamos isso de API Gateway ou de portão de uma API. Então, a partir de uma API Gateway é decidido para onde essa requisição vai ser realmente redirecionada.
+
+[01:23] Então, o problema que essa técnica visa resolver é aquela ideia de clientes acessando livremente cada um dos serviços e de que às vezes um serviço ou domínio muda para outro servidor, ou alguma coisa assim do tipo.
+
+[01:36] E eu não precisaria notificar meu cliente, meu cliente não precisaria saber dessa complexidade, mas ele precisaria se atualizar. Enfim, ele tem acesso demais à minha infraestrutura.
+
+[01:48] Para o cliente, para quem está acessando a nossa API e que usa microsserviços, isso deveria ser transparente. Então nós expomos uma única URL, um único servidor, que é essa nossa API Gateway; e a partir desse servidor (“api.alura.com.br”, por exemplo) ele vai fazer todas as requisições, mandando o endpoint correto e cada uma das requisições vai ser redirecionada para o serviço certo.
+
+[02:14] Então o API Gateway fornece um proxy, como temos utilizado o proxy reverso, para as necessidades reais.
+
+[02:22] Uma desvantagem interessante de falar é que esse portão de entrada pode se tornar um ponto único central de falha. E o que isso quer dizer? Se esse meu servidor, que só redireciona, estiver recebendo muitas requisições, nós podemos ter um downtime, podemos ter um atraso, nós podemos ter uma falha ali naquele ponto e derrubarmos toda a aplicação.
+
+[02:47] Então esse é um ponto crítico que devemos monitorar com bastante cuidado - mas vamos falar um pouco sobre performance ainda, então não vamos entrar tanto nesse detalhe.
+
+[02:57] E o comportamento de um API Gateway é importante conhecermos porque ele pode simplesmente redirecionar as requisições e pode permitir ou não uma requisição, então através do NGINX eu poderia configurar para só deixar as requisições vindas de um IP, por exemplo. Isso seria possível.
+
+[03:16] Eu posso utilizar algum tipo de decorator para adicionar informações necessárias no request ou até para remover da resposta. Eu posso adicionar informações de cache nesse meu API Gateway e eu posso adicionar informações de compressão para melhorar performance. Então eu posso adicionar cabeçalhos na ida e eu posso adicionar cabeçalhos na resposta.
+
+[03:38] Então eu posso modificar esses detalhes e eu também posso acabar limitando o acesso. Assim como eu falei de autorizar ou não, eu posso utilizar essa ideia de API Gateway para limitar o acesso, o conteúdo trafegado e impedir que determinadas URLs sejam acessadas por completo. Então eu posso ter um controle a mais.
+
+[03:59] Claro que, para determinados comportamentos e determinadas configurações, não adianta eu ter somente um proxy reverso. Eu precisaria ter uma aplicação ali no meu API Gateway que redirecionasse as chamadas. Mas para a nossa necessidade, onde eu só preciso redirecionar as chamadas, o NGINX já traz isso pronto, sem precisar de nenhum outro software externo.
+
+[04:20] Então essa é a ideia por trás de um API Gateway usando o NGINX!
+
+[04:24] Eu vou deixar na atividade “Para Saber Mais” uma referência muito interessante com um pouco mais de detalhes, do próprio site do NGINX, mostrando como implementar esse API Gateway.
+
+[04:34] Mas apesar de deixar esse “Para Saber Mais” aqui, eu vou pedir para você ler depois do final desse treinamento. Porque tem mais um conceito que vamos aprender que é utilizado naquele artigo.
+
+[04:44] Então, como eu falei um pouco aqui nessa parte de negrito de ponto central de falha, de receber muitas requisições, eu acho que está na hora de pelo menos começarmos a dar uma introdução ao conceito de performance.
+
+[04:58] O que acontece se um servidor meu de aplicação real que realmente responde as requisições se um servidor meu, não o API Gateway, estiver recebendo muitas requisições a mais do que ele consegue responder? O que nós podemos fazer nesses cenários? Como nós podemos, por exemplo, ter mais de um servidor respondendo a mesma aplicação?
+
+[05:20] Então vamos conversar sobre esses cenários no próximo capítulo!
+
+@@06
+Para saber mais: API Gateway
+PRÓXIMA ATIVIDADE
+
+Agora que conhecemos o conceito de um API Gateway, temos uma base melhor para esse artigo fenomenal do próprio Nginx:
+Deploying NGINX as an API Gateway, Part 1
+
+Vale a pena a leitura.
+
+https://www.nginx.com/blog/deploying-nginx-plus-as-an-api-gateway-part-1/
+
+@@07
+Faça como eu fiz
+PRÓXIMA ATIVIDADE
+
+Chegou a hora de você seguir todos os passos realizados por mim durante esta aula. Caso já tenha feito, excelente. Se ainda não, é importante que você execute o que foi visto nos vídeos para poder continuar com a próxima aula.
+
+Continue com os seus estudos, e se houver dúvidas, não hesite em recorrer ao nosso fórum!
+
+@@08
+O que aprendemos?
+PRÓXIMA ATIVIDADE
+
+Nesta aula, aprendemos:
+Entendemos o conceito de microsserviços
+Usamos proxy reverso para rotear requisições
+Aprendemos o conceito de API Gateway
