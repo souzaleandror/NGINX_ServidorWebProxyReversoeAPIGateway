@@ -3,13 +3,6 @@
 CURSO NGINX:
 servidor Web, Proxy Reverso e API Gateway
 
-sudo lsof -i:8080
-kill -9
-
-brew services start jenkins-lts
-brew services stop jenkins-lts
-brew services restart jenkins-lts
-
 @01-Conhecendo a ferramenta
 
 @@01
@@ -769,7 +762,6 @@ Entendendo o conceito
 
 @@06
 Para saber mais: API Gateway
-PRÓXIMA ATIVIDADE
 
 Agora que conhecemos o conceito de um API Gateway, temos uma base melhor para esse artigo fenomenal do próprio Nginx:
 Deploying NGINX as an API Gateway, Part 1
@@ -780,7 +772,6 @@ https://www.nginx.com/blog/deploying-nginx-plus-as-an-api-gateway-part-1/
 
 @@07
 Faça como eu fiz
-PRÓXIMA ATIVIDADE
 
 Chegou a hora de você seguir todos os passos realizados por mim durante esta aula. Caso já tenha feito, excelente. Se ainda não, é importante que você execute o que foi visto nos vídeos para poder continuar com a próxima aula.
 
@@ -788,9 +779,288 @@ Continue com os seus estudos, e se houver dúvidas, não hesite em recorrer ao n
 
 @@08
 O que aprendemos?
-PRÓXIMA ATIVIDADE
 
 Nesta aula, aprendemos:
 Entendemos o conceito de microsserviços
 Usamos proxy reverso para rotear requisições
 Aprendemos o conceito de API Gateway
+
+@05-Load Balancer
+
+@@01
+Upstreams
+
+[00:00] E aí, pessoal, boas-vindas de volta a mais um capítulo desse treinamento onde estamos brincando com o NGINX, que é um servidor web que pode servir como proxy reverso - e como vamos ver neste capítulo, ele também pode servir como load balancer.
+[00:14] Como comentei no capítulo anterior, pode acontecer de eu ter o NGINX e ele estar servindo como proxy reverso, só que o servidor final (o servidor de aplicação, por exemplo, ou outro servidor web) estar recebendo mais requisições do que ele consegue aguentar.
+
+[00:31] Então está consumindo muitos recursos, as requisições estão se tornando mais lentas, então o que eu quero fazer é dividir essa carga. Agora eu quero deixar uma coisa clara: cada um desses servidores que criamos aqui é como se fosse um computador diferente.
+
+[00:52] Então, aqui o “localhost: 8080” é como se fosse um computador que está servindo de proxy reverso, esse “8001” é como se fosse outro computador que tem um serviço e esse “8002” é como se fosse outro computador que tem esse outro microsserviço.
+
+[01:09] Então eu estou criando vários serviços na mesma máquina para simplificar, para não precisarmos criar containers e para não precisarmos lidar com redes. Então é para nós simplificarmos e termos tudo na mesma máquina.
+
+[01:18] Só que a ideia é, como eu disse: o “8001” é um computador respondendo à requisição, o “8002” aqui é como se fosse uma outra máquina respondendo essas requisições.
+
+[01:31] Então, o que eu quero agora é: imagine que na máquina que eu tenho aqui em “localhost: 8002” e na máquina “localhost: 8001” eu quero ter a mesma aplicação. Por quê?
+
+[01:45] Quando eu acessar aqui, por exemplo, outro serviço que eu vou criar aqui, quando eu acessar essa URL sem passar nada, eu quero que ora eu caia no “serviço 1” e ora eu caia no “serviço 2”. Ou seja, eu quero ir balanceando essa carga para não sobrecarregar nenhum dos dois servidores.
+
+[02:03] Então eu vou dividir a minha aplicação em dois servidores e cada hora eu vou mandar a requisição para um dos dois, é esse o objetivo que eu quero atender.
+
+[02:11] Então, vamos para o terminal usar o comando nginx -s reload, vamos ver se as configurações estão atualizadas. Se você acessar no navegador http://localhost:8003, dá o erro “ERR_CONNECTION_REFUSED”, porque não tenho esse servidor configurado.
+
+[02:22] Então vamos configurar esse servidor como um load balancer, um balanceador de carga que ora manda para “8002” e ora manda para “8001”.
+
+[02:33] No terminal, deixe-me inclusive renomear aquele mv Dev/nginx/servico2/servico.html para Dev/nginx/servico2/index.html. Então, agora “8001” é o “Serviço 1”, “8002” é o “Serviço 2” e quando eu acessar o “8003” eu quero cada hora cair em um desses dois servidores.
+
+[02:54] De novo, imagine que eles têm a mesma aplicação, o mesmo código. Quando você faz o build você manda para esses dois servidores e o nosso load balancer vai cada hora mandar a requisição para um dos dois.
+
+[03:06] Então, vamos nessa! No terminal eu vou criar vim /usr/local/etc/nginx/servers/load-balancer.conf. O nome você pode escolher, eu estou criando um novo servidor aqui.
+
+[03:25] Então aqui eu vou ter o meu server {. Ele vai ouvir, então listen 8003;. O nome do servidor é server_name localhost; como já estamos habituados. Agora, quando ele acessar qualquer coisa (ou seja, um ‘location /’), eu preciso mandar ele para algum lugar proxy_pass http://. Então eu preciso definir alguma coisa que represente esse conjunto de servidores - e com o NGINX eu posso fazer isso através da diretiva upstream.
+
+[04:02] Então aqui eu vou dar um nome para esse upstream, por exemplo - upstream serviços {. Aqui em upstream serviços eu posso definir alguns servidores. Eu posso definir outras coisas, mas principalmente, servidores.
+
+[04:14] Então vou definir, por exemplo, server localhost:8001; e vou definir um outro servidor server localhost:8002;. Então quando aqui dentro do servidor que eu estou definindo, eu me referir ao servidor serviços, o NGINX vai saber: “É qualquer um desses dois aqui, então eu vou mandar ora para um e ora para outro”.
+
+[04:41] Então, vamos lá! Eu posso simplesmente utilizar o nome 'serviços' location / { proxy_pass http://servicos;. Com isso, se eu não fiz nenhuma bobeira, nós vamos verificar com o comando nginx -t.
+
+[04:49] Aparentemente a sintaxe está certa, então vamos usar o comando nginx -s reload. O que vai acontecer agora? Deixe-me abrir o servidor de novo. Quando eu acessar o “localhost:8003”, em qualquer URL, ele vai fazer o proxy reverso para algum dos servidores aqui dentro de serviços. Em upstream serviços eu tenho o ‘8001’ e o ‘8002’. Então, ele vai balancear a carga.
+
+[05:14] Então para vermos isso acontecer, eu vou atualizar o navegador.
+
+[05:17] Caiu no “Serviço 1”. Vou atualizar de novo.
+
+[05:19] Agora no “Serviço 2”! Ora no “Serviço 2” e ora no “Serviço 1”, então ele vai balanceando. A cada requisição que chega ele vai mandar para um dos servidores. Dessa forma, balanceamos a carga.
+
+[05:34] Existem algoritmos mega complexos de balanceamento de carga - round-robin etc. - mas a forma mais rudimentar de um load balancer é essa. Metade dos serviços vai para cada um dos servidores.
+
+[05:46] Nós podemos posteriormente estudar outros algoritmos de balanceamento, mas essa é a primeira forma de fazermos isso.
+
+[05:53] Só tem um detalhe um tanto quanto interessante e importante de vermos quando fazemos proxy reverso - seja com balanceamento de carga, seja com o API Gateway, ou seja para um proxy reverso para um servidor de aplicação - a parte de logs pode ficar um pouco confusa.
+
+[06:10] Então no próximo vídeo,nós vamos aprender a ler os logs de um dos nossos servidores. Para isso, vamos ter que configurar algum log, e a partir desse log vamos encontrar um problema.
+
+[06:22] Então vamos passo-a-passo aprendendo a lidar com essa parte de logs usando NGINX.
+
+@@02
+Significado
+
+Conseguimos neste vídeo de forma muito simples configurar um load balancer usando a diretiva upstream.
+O que significa na prática upstream nas configurações do nginx?
+
+Lista de todos os servidores funcionais em nossa máquina
+ 
+Alternativa correta
+Um grupo de servidores
+ 
+Alternativa correta! Através do nome definido em upstream, podemos acessar algum dos servidores deste grupo dependendo de algumas regras definidas.
+Alternativa correta
+Um nome para um load balancer
+
+@@03
+Configuração de logs
+
+[00:00] Quando trabalhamos com proxy reverso ou com o load balancer nós precisamos fazer algumas modificações no log para garantirmos que nós temos a informação correta.
+[00:13] Então antes de fazermos qualquer modificação, vamos habilitar os logs para a nossa aplicação. Se dermos uma olhada no nosso arquivo de configuração padrão, nós temos dois tipos de log.
+
+[00:23] Nós temos error_log, como estamos vendo aqui, e o acess_log. A diferença é que o acess_log é qualquer log de acesso. Sempre que uma requisição é processada, o NGINX salva um log. Já um error_log é um log somente de erros, então se aconteceu algum problema, ele vai gerar esse tipo de log.
+
+[00:45] Então eu quero configurar somente o acess_log. Então eu preciso usar essa diretiva #access_log.
+
+[00:53] E nós podemos passar um formato do log. Então repare que nós temos aqui um formato main desse log. Então eu vou descomentar isso daqui, ou seja, eu vou habilitar esse formato de log.
+
+[01:08] Só que eu não vou habilitar o acess_log ainda, porque eu vou querer habilitar o acess_log para cada um dos meus servidores em arquivos diferentes. Então, vamos lá!
+
+[01:18] Primeiramente, deixe-me eu decidir onde que eu vou salvar esses logs. Eu vou salvar aqui em mkdir Dev/nginx/logs/. Um detalhe importante é que o caminho para os nossos logs precisam ser em uma pasta que já exista, o NGINX não vai criar essa pasta, tem que ser em algum lugar que o usuário do NGINX tenha a permissão de escrita. Nós podemos definir qual o usuário do NGINX através de ‘user’.
+
+[01:46] Mas nessa pasta que eu acabei de criar, qualquer usuário tem permissão, então vamos nessa. Eu vou acessar os meus serviços - vim /usr/local/etc/nginx/servers/microsservicos.conf.
+
+[02:02] Então nesses dois serviços eu vou ativar o acess_log. Então, vamos lá! access_log /Users/vinicius.dias/Dev/nginx/logs/servico1.log;. Então esse vai ser o meu acess_log do meu ‘servico1’ e esse vai ser o acess_log do meu ‘servico2’ - access_log /Users/vinicius.dias/Dev/nginx/logs/servico2.log;.
+
+[02:27] Então deixe-me garantir que usei a pasta certa. Isso aí, logs! Então deixe-me garantir que aqui está tudo certo. Deixe-me recarregar com o comando nginx -s reload. Aqui eu vou criar uma nova aba para fazer um tail -f Dev/nginx/logs/servico1.log.
+
+[02:48] Então esse comando tail -f fica lendo esse arquivo. E sempre que acontecer alguma coisa; se alguma linha for escrita nesse arquivo, já vai aparecer diretamente aqui no comando.
+
+[02:59] Então vou fazer a mesma coisa com o ‘servico2’ - tail -f Dev/nginx/logs/servico2.log. Então eu estou lendo os dois arquivos e agora vou utilizar aquele nosso load balancer.
+
+[03:14] Vou acessar no navegador, http://localhost:8003.
+
+[03:15] Primeiro caiu no “Serviço 1”, então eu espero ver aqui no terminal o log do ‘servico1’.
+
+[03:19] Perfeito! Agora quando eu acessar de novo, eu vou cair no “Serviço 2”
+
+[03:26] E eu tenho aqui no terminal, o log do ‘servico2’.
+
+[03:28] E vamos bater o olho aqui rápido no formato desse log.
+
+[03:33] O que nós temos é: primeiro, o endereço remoto - ou seja, o endereço de quem fez essa requisição; o usuário remoto; o horário local; os dados da requisição; e aí tem o status; o corpo da requisição; e esse monte de coisas sobre a requisição em si.
+
+[03:51] Então aqui nós temos o nosso servidor que fez a requisição, que é sempre aqui da máquina local; nós temos a data e hora, ou seja, o momento; os dados da requisição em si; nós não temos nenhum corpo, mas aqui nós temos a requisição completa com o user agent e tudo. Então nós vemos que tem muitas informações aqui.
+
+[04:13] Só que tem um detalhe muito importante. Aqui, todas as requisições estão vindo do mesmo local, porque eu que estou fazendo da minha máquina local, e eu acesso outro servidor que está na minha máquina local, faço proxy reverso para a minha máquina local. Está tudo aqui.
+
+[04:28] Só que tem um detalhe muito importante: imagine que “localhost:8003” estivesse no IP “1921683”, aí quando eu acesso ele, ele redireciona para “1921682”. Então, aqui no log do meu ‘servico2’, ele mostraria que quem fez a requisição é o IP do nosso load balancer.
+
+[04:54] Então isso é um problema quando trabalhamos realmente com servidores diferentes, porque nós perderíamos a informação real de quem está fazendo essa requisição.
+
+[05:04] Então, para resolvermos esse problema, nós temos algumas possíveis soluções. Nós vamos ver como adicionar informações a esse log, como podemos enviar detalhes a mais usando proxy reverso e pegar essas informações para adicionar no log. Só que isso eu vou fazer no próximo vídeo!
+
+@@04
+Formato de logs
+
+[00:00] Nós já vimos como adicionar logs. Esse é o primeiro passo, mas vamos mexer no formato desses logs, porque tem muitas coisas que nós nem precisamos complicar a visualização.
+[00:12] Então vamos acessar duas coisas. Primeiro aqui no nosso ‘nginx.conf’ vamos nesse log_format main.
+
+[00:22] Precisamos do endereço, mas não temos acesso ao usuário remoto, isso aqui vai vir sempre como um traço vazio, sem nada. Então vamos remover $remote_user. Vamos manter o horário, acho que é interessante manter.
+
+[00:34] Aqui em “$request” é como foi a requisição, então isso eu acho legal manter. O número de bytes enviado eu acho que não tem muita necessidade, então posso remover esse $body_bytes_sent.
+
+[00:47] Esse “$http_referer” nós vamos manter também. O “$http_user_agent” nós não precisamos, esse “$http_x_forwarded_for” não precisamos. Então posso remover toda essa linha e adicionar no final um ponto e vírgula.
+
+[00:57] Agora vamos deixar isso um pouco mais claro. Vamos botar aqui remote addr: $remote_addr, Time: [$time_local], Request: $request”;, Status: $status, Referer: “$http_referer”;. Só para entendermos o que é o quê. Eu salvei.
+
+[01:29] Agora nos nossos microsserviços, eu preciso usar aquele log format. Então como o nome daquele formato é ‘main’, eu vou adicionar depois do arquivo o nome do formato, que é ‘main’ - access_log /Users/vinicius.dias/Dev/nginx/logs/servico1.log main;.
+
+[01:40] Então eu posso ter formatos diferentes para logs diferentes. No nosso caso, eu vou manter um só. Vamos garantir que eu não fiz nenhuma besteira, com o comando nginx -t. Aparentemente está tudo certo. Vamos fazer o reload com o comando nginx -s reload.
+
+[01:51] E agora, deixe-me vir aqui no nosso tail -f e apertar a tecla “Enter” algumas vezes para limpar a tela. Quando eu acessar, eu espero ver o log naquele formato. Então vamos ver no “Serviço 1”.
+
+[02:02] Tenho aqui. O endereço remoto é, como sempre, o da minha máquina local. Tenho aqui o horário, tem os dados do ‘request’ e tenho aqui o nosso status ‘304’, ou seja, um redirecionamento. E o ‘referer’ está vindo vazio também, então posso remover isso daqui.
+
+[02:20] Vamos para ‘nginx.conf’ e remover para mantermos isso bem limpo. Vamos remover o ‘Referer: “$http_referer”‘. OK, removido.
+
+[02:34] Sendo assim, nós temos um log bem mais enxuto. Tudo parece certo, vamos fazer o reload. Vamos carregar de novo o “Serviço 1”. Deixe-me acessar o “Serviço 2”. E tenho aqui bem mais enxuto.
+
+[02:46] Então o que eu fiz aqui foi adicionar log e mexer no formato dele. Para quê eu fiz isso? Para nós conseguirmos enxergar melhor e agora, de novo, eu vou falar qual é o problema que está acontecendo.
+
+[02:56] Eu acesso esse serviço, “http://localhost:8003”. Esse serviço acessa “http://localhost:8002” ou “http://localhost:8001”.
+
+[03:04] Então, aqui no log do “Serviço 2” e no log do “Serviço 1”,se realmente tivéssemos máquinas diferentes, esse “Remote Addr”, ou seja, esse endereço remoto de quem está acessando o meu serviço iria ser sempre do load balancer.
+
+[03:18] E com isso, nós não poderíamos ter estatísticas para garantirmos que estamos recebendo um ataque realmente, quais usuários realmente estão acessando a nossa aplicação - nós não iríamos ter essa informação tão preciosa.
+
+[03:29] Então agora que nós configuramos log direito, mudamos o formato dele e estamos entendendo o problema, finalmente vamos aprender a corrigir no próximo vídeo.
+
+@@05
+Adicionando informações
+
+[00:00] Finalmente vamos resolver o problema que eu disse que iríamos resolver.
+[00:06] O que eu quero é que sempre que eu receba uma requisição naquele nosso load balancer, além de fazer o proxy_pass, eu quero adicionar um cabeçalho HTTP. Então deixe-me abrir aqui o load-balancer.conf.
+
+[00:23] O que eu posso fazer é adicionar aqui uma nova diretiva proxy_set_header. Quando eu disse que o load balancer, um API Gateway ou que algum proxy reverso qualquer podem fazer manipulações, é disso que eu estava falando. Nós podemos adicionar, por exemplo, um novo cabeçalho.
+
+[00:44] Eu vou adicionar um cabeçalho personalizado, que eu posso dar o nome que eu quiser. Segundo a especificação HTTP, quando vamos adicionar cabeçalhos personalizados que não fazem da especificação, o ideal é começarmos com ‘X-’ e o que vier depois nós escreveremos o que quisermos.
+
+[01:00] Então eu vou chamar isso de proxy_set_header X-Real-IP, mas eu posso chamar do que eu quiser, ‘IP-de-verdade’, só ‘IP’, ‘endereco’ - posso chamar como eu quiser.
+
+[01:13] E aqui o valor que isso vai ter é o $remote_addr;. Então eu sei que essa variável existe porque ela está lá no log format. Então existem diversos valores que nós podemos pegar aqui, como já vimos no log format.
+
+[01:28] Então eu estou pegando o endereço que está mandando a requisição para o meu load balancer e adicionando em um cabeçalho que vai ser enviado para os meus serviços. Essa é a primeira etapa.
+
+[01:39] Agora nos serviços eu posso adicionar naquele formato do log. Invés de utilizar o $remote_addr, eu posso utilizar esse cabeçalho, que é ‘X-Real-IP’. Vamos ver como podemos fazer isso. O nosso formato de log está aqui no arquivo principal de configuração.
+
+[02:01] Então ao invés de usar o $remote_addr, eu vou utilizar $http_x_real_ip, trocando o traço por underline eu posso pegar qualquer cabeçalho.
+
+[02:17] Então dessa forma, imagine que o meu IP seja ‘1921687’. Eu fiz requisição para esse serviço, que é '1921683’. Esse serviço fez o proxy reverso e mandou requisição para ‘1921682’.
+
+[02:34] Então no log desse “Serviço 2”, o IP que vai estar como IP remoto agora vai ser o meu ‘1921687’, o IP da minha máquina. E assim, eu vou ter acesso aos IPs reais.
+
+[02:46] Então vamos garantir que eu não fiz nenhuma bobagem. Eu vou usar o comando ‘nginx -s reload’ para garantir que o resultado continue sendo o mesmo. Deixe-me quebrar a linha aqui, para garantir. E vamos lá acessar no navegador http://localhost:8003. Ele deve acessar o “Serviço 1”, agora o “Serviço 2”.
+
+[03:03] Ele continua conseguindo pegar o ‘remote addr’ nos dois locais, só que com a diferença de que se eu estiver em máquinas diferentes, aqui eu vou ter realmente o IP de quem mandou a requisição.
+
+[03:15] Isso é muito importante quando trabalhamos com load balancer, mas também quando fazemos qualquer outro tipo de proxy reverso. Seja mandando para um servidor de aplicação, e aí precisamos saber como fazer isso; seja mandando para outros servidores HTTP, somente como proxy reverso; ou nesse caso, como load balancer.
+
+[03:33] Nós precisamos configurar esse tipo de coisa, precisamos saber o que estamos fazendo para garantirmos que teremos acesso às informações corretas.
+
+[03:40] Como eu já disse, utilizar o proxy pass e fazer uma outra requisição HTTP não é a única forma de ter um proxy reverso. Existem outros protocolos que podemos utilizar e esses outros protocolos podem lidar com esse cenário de formas diferentes - mas isso podemos tratar no outro treinamento!
+
+@@06
+Problema
+
+Neste capítulo, após configurarmos um load balancer, fizemos algumas configurações nos logs para evitar um problema no ambiente de produção.
+Que problema nós evitamos neste capítulo?
+
+Não havia problema. Apenas mudamos o formato de logs
+ 
+Alternativa correta
+IPs incorretos nos logs de acesso dos servidores
+ 
+Alternativa correta! Da forma como estava no primeiro vídeo, os servidores sempre realizariam o log como se o cliente fosse nosso load balancer, sem conseguirmos rastrear o IP do cliente real.
+Alternativa correta
+Informações demais nos logs de acesso
+
+@@07
+Faça como eu fiz
+
+Chegou a hora de você seguir todos os passos realizados por mim durante esta aula. Caso já tenha feito, excelente. Se ainda não, é importante que você execute o que foi visto nos vídeos para poder continuar com os próximos cursos que tenham este como pré-requisito.
+
+Continue com os seus estudos, e se houver dúvidas, não hesite em recorrer ao nosso fórum!
+
+@@08
+O que aprendemos?
+
+Nesta aula, aprendemos:
+Conhecemos o conceito de load balancer
+Aprendemos a configurar upstreams
+Vimos como funcionam os logs
+Aprendemos a enviar cabeçalhos no proxy reverso
+Colocamos informações personalizadas nos logs
+
+@@09
+Conclusão
+
+[00:00] Parabéns por chegarem ao final desse primeiro treinamento sobre NGINX! Nós aprendemos bastante coisas legais, então vamos só relembrar um pouco do que nós vimos.
+[00:11] Primeiro, obviamente, nós entendemos o que é esse tal de NGINX e qual o papel dele na web. Afinal de contas, ele é um servidor web então nós precisamos estar no mundo web para utilizarmos ele.
+
+[00:21] Depois de entendermos e, obviamente, instalarmos, nós começamos a brincar um pouco criando nossos primeiros servidores. Para isso, nós conhecemos o arquivo de configuração “nginx.conf”, que já tem bastante coisas. Inclusive, recomendo que você pegue aqueles comentários e entenda o que cada diretiva faz.
+
+[00:38] E nós criamos o nosso próprio arquivo, ou utilizamos um arquivo padrão existente, e nele nós aprendemos algumas coisas.
+
+[00:46] Primeiro, nós criamos o nosso servidor HTTP. Nós fizemos com que o nosso computador ouvisse uma porta e respondesse requisições HTTP nela de forma bastante simples e com uma configuração bem pequena.
+
+[00:58] A partir disso, começamos a conversar sobre proxy reverso e nós entendemos a necessidade disso. Inclusive, nós aplicamos isso em um proxy reverso mandando para um servidor de aplicação, no caso, de PHP.
+
+[01:11] Falamos, claro, sobre configurações de páginas de erro etc., e conforme nós fomos avançando, nós aprendemos sobre as necessidades e sobre as aplicabilidades de proxy reverso.
+
+[01:23] Então, nós vimos como implementar um API Gateway utilizando NGINX de forma bastante simples. Nós temos servidores específicos e outro servidor manda as requisições para esse daqui.
+
+[01:34] E falando em proxy reverso e serviços diferentes, nós entramos no assunto de load balancer. Então nós aprendemos a criar um upstream onde nós temos diversos servidores que podem ser vistos como um serviço e a partir disso nós aprendemos a fazer o proxy-pass para eles, ou seja, fazer o proxy reverso para mais de um servidor chegando no objetivo de load balancer.
+
+[01:57] Só que aí, quando tratamos de load balancer, proxy reverso e mandar requisições para outros serviços, nos deparamos no problema de logs.
+
+[02:06] Então, nós aprendemos a configurar logs, mudar o formato de logs, e inclusive, adicionar informações a logs mandando cabeçalhos HTTP, pegando cabeçalhos HTTP no log format... Enfim, nós aprendemos bastante coisas!
+
+[02:20] Claro que isso não é tudo que tem para vermos sobre NGINX, mas isso já é bastante e é o suficiente para começarmos e colocarmos aplicações em produção.
+
+[02:30] Com isso aqui que aprendemos já somos 100% capazes de fazer deploy de uma aplicação web em produção em qualquer linguagem. Se você sabe configurar o servidor de aplicação da sua linguagem, você pode fazer, por exemplo, proxy reverso do NGINX para o seu servidor de aplicação.
+
+[02:48] Então, dessa forma nós conseguimos ter load balancer de forma simples; conseguimos fazer um proxy reverso adicionando informações; conseguimos devolver os arquivos estáticos direto pelo NGINX, sem passarmos pelo servidor de aplicação. Então nós aprendemos bastante coisas!
+
+[03:02] E se em algum desses pontos você ficou com alguma dúvida ou algo não ficou claro, não hesite, você pode abrir uma dúvida lá no fórum! Eu tento responder pessoalmente sempre que possível, mas quando eu não consigo, a nossa comunidade de alunos, instrutores e moderadores é muito solícita e, com certeza, alguém vai conseguir te ajudar.
+
+[03:20] Mais uma vez, parabéns por ter chegado até aqui! Espero que você tenha gostado bastante e te vejo em próximos treinamentos aqui na Alura. Tchau!
+
+list of commands
+``````
+
+Utils Command:
+
+sudo lsof -i:8080
+kill -9
+
+brew services start jenkins-lts
+brew services stop jenkins-lts
+brew services restart jenkins-lts
+
+php -S localhost:8000
+
+nginx -s reload
+nginx -t
+
+php -S localhost:8000
+
+brew install nginx
+brew install php
+``````
